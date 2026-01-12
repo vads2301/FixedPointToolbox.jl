@@ -81,6 +81,43 @@ Optionally can also pass a `fileName` to checkpoint and save the results in. Can
 
     end
 
+    function FixedPoint_LastIt!(SC::SelfCons, fileName::String; tol::Float64=1e-6, max_iter::Int64=100, checkpoint_interval::Int64 = 10, _extra...) 
+        #Variant of FixedPoint which only saves results at each checkpoint. For now it is recommended not to use the checkpoint
+        #continue from this checkpoint. Further tests need to be done, notably on the reconstruction of the Model object
+        #before usage. ContinueFixedPoint! will anyway not work with this output as of now.
+        SelfConsParams  =   Dict(:iter => 0, :max_iter => max_iter, :tol => tol, :checkpoint_interval => checkpoint_interval)
+
+        @info "Beginning Iterations..."
+        for iter in 1:max_iter
+
+            SelfConsParams[:iter]  =   SelfConsParams[:iter] + 1
+
+            updates =   SC.Update(SC.VIns[end], SC.VOuts[end], SC.F ; F_args = SC.F_args, F_kwargs = SC.F_kwargs, SC.Update_kwargs..., SelfConsParams...)
+
+            SC.Update_kwargs  =   get(updates, "kwargs", SC.Update_kwargs)
+            SC.F_args         =   get(updates, "F_args", SC.F_args)
+            SC.F_kwargs       =   get(updates, "F_kwargs", SC.F_kwargs)
+
+            push!(SC.VIns, updates["VInNext"])
+            push!(SC.VOuts, updates["VOutNext"])
+
+            if iter == 1 || (iter % checkpoint_interval) == 0 || iter == max_iter
+                save_result_LastIt(fileName, SC, SelfConsParams)
+                @info "Checkpoint Saved in $(fileName)."
+            end
+
+            if updates["Delta"] < tol
+                @info "Converged within tolerance = $(tol)"
+                save_result_LastIt(fileName, SC, SelfConsParams)
+                @info "Converged result Saved in $(fileName)."
+
+                break
+            end
+
+        end
+
+    end
+
 
 @doc """
 ```julia

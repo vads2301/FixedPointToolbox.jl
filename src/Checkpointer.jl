@@ -26,6 +26,33 @@ Also saves some self-consistency parameters like maximum iteration, tolerance et
         end 
     end
 
+@doc """
+```julia
+save_result_LastIt(fileName::String, sc::SelfCons, SelfConsParams::Dict{Symbol, Real})
+```
+
+Save the relevant attributed of a `SelfCons` data structure in a JLD2 file `fileName` (`fileName` must end with .jld2). 
+Also saves some self-consistency parameters like maximum iteration, tolerance etc.
+This variant only saves the last iteration of the self-consistency loop to file 'fileName', as well as some important information
+to reconstruct the model. Reconstruction has however not been tested yet and should not be done.
+
+"""
+    function save_result_LastIt(fileName::String, sc::SelfCons, SelfConsParams::Dict{Symbol, Real})
+
+        jldopen( fileName , "w" ) do f 
+            f["Hopping UnitCell"]           =   sc["function args"][1].model.uc_hop
+            f["Pairing UnitCell"]           =   sc["function args"][1].model.uc_pair
+            f["BZ"]                         =   sc["function args"][1].model.bz
+            f["PairingOrders"]              =   sc["function args"][1].PairingOrders
+            f["HoppingOrders"]              =   sc["function args"][1].HoppingOrders
+            f["Convergence"]                =   maximum(abs.(sc["outputs"][end] - sc["outputs"][end-1]))
+            f["n"]                          =   sc["function args"][1].model.filling
+            f["mu"]                         =   sc["function args"][1].model.mu
+            f["MFT Energy"]                 =   last(sc["function args"][1].MFTEnergy)
+            f["Gr"]                         =   sc["function args"][1].model.Gr[1,1]
+        end 
+    end
+
 
 @doc """
 ```julia
