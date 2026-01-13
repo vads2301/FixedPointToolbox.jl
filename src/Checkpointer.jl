@@ -1,5 +1,5 @@
 module Checkpointer
-    export save_checkpoint, read_checkpoint, ReCreateSelfCons
+    export save_checkpoint, read_checkpoint, ReCreateSelfCons,save_result_LastIt
 
     using ..FixedPointToolbox.SelfConsistency:SelfCons
     using JLD2
